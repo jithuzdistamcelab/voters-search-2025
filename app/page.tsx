@@ -23,7 +23,6 @@ interface Voter {
   local_body: string;
 }
 
-
 export default function VoterSearch() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Voter[]>([]);
@@ -101,9 +100,7 @@ export default function VoterSearch() {
               <Users className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Voter Information Portal
-              </h1>
+              <h1 className="text-3xl font-bold text-gray-900">Voter Info</h1>
               <p className="text-sm text-gray-600 mt-1">
                 Search and verify voter registration details
               </p>
@@ -119,7 +116,8 @@ export default function VoterSearch() {
             <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
               Find Voter Information
             </h2>
-            <div className="flex gap-3">
+
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
                 <input
                   type="text"
@@ -130,10 +128,11 @@ export default function VoterSearch() {
                 />
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               </div>
+
               <button
                 onClick={() => search(1, false)}
                 disabled={isSearching || !query.trim()}
-                className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 shadow-lg transition-all"
+                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 shadow-lg transition-all"
               >
                 {isSearching ? "Searching..." : "Search"}
               </button>
@@ -152,7 +151,6 @@ export default function VoterSearch() {
               voter
               {totalResults !== 1 ? "s" : ""}
             </h3>
-       
           </div>
         )}
 
@@ -371,8 +369,8 @@ export default function VoterSearch() {
         {results.length > 0 && !hasMore && totalResults > 20 && (
           <div className="text-center mt-10 text-gray-600">
             <p className="text-lg">
-              You&apos;ve viewed all <strong>{totalResults.toLocaleString()}</strong>{" "}
-              matching voters
+              You&apos;ve viewed all{" "}
+              <strong>{totalResults.toLocaleString()}</strong> matching voters
             </p>
           </div>
         )}
