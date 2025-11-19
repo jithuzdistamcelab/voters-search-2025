@@ -1,9 +1,12 @@
 // app/api/search/route.ts
 import { NextResponse } from "next/server";
 import Database from "better-sqlite3";
+import path from "path";
+
 import { Voter } from "@/types/voter";
 
-const db = new Database("voters-list.db", { readonly: true });
+const dbPath = path.join(process.cwd(), "public/db/voters-list.db");
+const db = new Database(dbPath, { readonly: true });
 
 const searchStmt = db.prepare(`
   SELECT
