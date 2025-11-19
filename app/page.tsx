@@ -102,7 +102,7 @@ export default function VoterSearch() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Voter Info</h1>
               <p className="text-sm text-gray-600 mt-1">
-                Search and verify voter registration details
+                verify voter registration details
               </p>
             </div>
           </div>
