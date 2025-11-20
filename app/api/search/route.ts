@@ -8,6 +8,7 @@ import { Voter } from "@/types/voter";
 const dbPath = path.join(process.cwd(), "public/db/voters-list.db");
 const db = new Database(dbPath, { readonly: true });
 
+// --- SEARCH QUERY ---
 const searchStmt = db.prepare(`
   SELECT
     *,
@@ -33,34 +34,42 @@ const searchStmt = db.prepare(`
     ) AS score
   FROM voters
   WHERE
-    name_en LIKE ?
-    OR name_ml LIKE ?
-    OR voter_id LIKE ?
-    OR house_name_en LIKE ?
-    OR house_name_ml LIKE ?
-    OR guardian_en LIKE ?
-    OR guardian_ml LIKE ?
+    (
+      name_en LIKE ?
+      OR name_ml LIKE ?
+      OR voter_id LIKE ?
+      OR house_name_en LIKE ?
+      OR house_name_ml LIKE ?
+      OR guardian_en LIKE ?
+      OR guardian_ml LIKE ?
+    )
+    AND (? = '' OR ward = ?)   -- <-- ward filter added
   ORDER BY score DESC, name_en ASC
   LIMIT ? OFFSET ?;
 `);
 
+// --- COUNT QUERY ---
 const countStmt = db.prepare(`
   SELECT COUNT(*) AS total
   FROM voters
   WHERE
-    name_en LIKE ?
-    OR name_ml LIKE ?
-    OR voter_id LIKE ?
-    OR house_name_en LIKE ?
-    OR house_name_ml LIKE ?
-    OR guardian_en LIKE ?
-    OR guardian_ml LIKE ?;
+    (
+      name_en LIKE ?
+      OR name_ml LIKE ?
+      OR voter_id LIKE ?
+      OR house_name_en LIKE ?
+      OR house_name_ml LIKE ?
+      OR guardian_en LIKE ?
+      OR guardian_ml LIKE ?
+    )
+    AND (? = '' OR ward = ?);   -- <-- ward filter added
 `);
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
   const q = (searchParams.get("q") || "").trim();
+  const ward = (searchParams.get("ward") || "").trim(); // <-- NEW
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
   const limit = Math.min(100, parseInt(searchParams.get("limit") || "20"));
   const offset = (page - 1) * limit;
@@ -79,17 +88,21 @@ export async function GET(req: Request) {
   const prefix = `${q}%`;
 
   try {
+    // --- COUNT ---
     const totalResult = countStmt.get(
-      like, like, like, like, like, like, like
+      like, like, like, like, like, like, like, // search filters
+      ward, ward                                // ward filter
     ) as { total: number };
 
+    // --- SEARCH ---
     const rows = searchStmt.all(
-      prefix, prefix,      // prefix EN + ML
-      like, like,          // contains EN + ML
-      like,                // voter_id
-      like, like,          // house EN + ML
-      like, like,          // guardian EN + ML
-      like, like, like, like, like, like, like,  // WHERE filters
+      prefix, prefix,     // scoring prefix
+      like, like,         // scoring contains
+      like,               // scoring voter_id
+      like, like,         // scoring house
+      like, like,         // scoring guardian
+      like, like, like, like, like, like, like, // WHERE filters
+      ward, ward,         // ward filter
       limit,
       offset
     ) as Voter[];

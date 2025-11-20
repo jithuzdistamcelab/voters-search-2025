@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, User, Home, MapPin, Users, CreditCard } from "lucide-react";
 import HighlightedText from "@/components/HighlightedText";
+import { WARDS } from "@/types/voter";
 
 interface Voter {
   id: number;
@@ -31,6 +32,8 @@ export default function VoterSearch() {
   const [hasMore, setHasMore] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [ward, setWard] = useState("");
+
   const isFetching = useRef(false);
 
   const search = useCallback(
@@ -42,14 +45,20 @@ export default function VoterSearch() {
       setLoading(true);
 
       try {
-        const res = await fetch(
-          `/api/search?q=${encodeURIComponent(query)}&page=${pageNum}&limit=20`
-        );
+        const params = new URLSearchParams({
+          q: query,
+          page: String(pageNum),
+          limit: "20",
+        });
+
+        if (ward) params.set("ward", ward); // <<-- ADD WARD FILTER
+
+        const res = await fetch(`/api/search?${params.toString()}`);
         const data = await res.json();
 
         if (append) {
           setResults((prev) => [...prev, ...data.results]);
-          setHasMore(data.hasMore ?? data.results.length === 20); // 🔥 FIX
+          setHasMore(data.hasMore ?? data.results.length === 20);
         } else {
           setResults(data.results || []);
           setTotalResults(data.total || 0);
@@ -67,7 +76,7 @@ export default function VoterSearch() {
         isFetching.current = false;
       }
     },
-    [query]
+    [query, ward] // <<-- ADD ward to dependency
   );
 
   // Debounced search
@@ -118,21 +127,41 @@ export default function VoterSearch() {
             </h2>
 
             <div className="flex flex-col sm:flex-row gap-3">
+              {/* Search Input */}
               <div className="flex-1 relative">
                 <input
                   type="text"
                   placeholder="Enter name, voter ID, or house number..."
-                  className="w-full px-5 py-4 pl-12 text-lg text-gray-800 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                  className="w-full px-5 py-4 pl-12 text-lg text-gray-800 border-2 border-gray-300 rounded-xl 
+                     focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               </div>
 
+              {/* Ward Dropdown */}
+              <select
+                className="w-full sm:w-60 px-4 py-4 border-2 border-gray-300 rounded-xl text-lg text-gray-800
+             bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                value={ward}
+                onChange={(e) => setWard(e.target.value)}
+              >
+                <option value="">All Wards</option>
+
+                {WARDS.map((w) => (
+                  <option key={w.code} value={w.code}>
+                    {w.code}-{w.name}
+                  </option>
+                ))}
+              </select>
+              {/* Search Button */}
               <button
                 onClick={() => search(1, false)}
                 disabled={isSearching || !query.trim()}
-                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 shadow-lg transition-all"
+                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 
+                   text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 
+                   disabled:opacity-50 shadow-lg transition-all"
               >
                 {isSearching ? "Searching..." : "Search"}
               </button>
@@ -144,10 +173,10 @@ export default function VoterSearch() {
         {results.length > 0 && (
           <div className="mb-6 text-center">
             <h3 className="text-2xl font-bold text-gray-800">
-              Found{" "}
+              Found
               <span className="text-indigo-600 text-3xl">
                 {totalResults.toLocaleString()}
-              </span>{" "}
+              </span>
               voter
               {totalResults !== 1 ? "s" : ""}
             </h3>
@@ -281,7 +310,7 @@ export default function VoterSearch() {
                           Ward
                         </p>
                         <p className="font-semibold text-sm">
-                          {voter.ward} - {voter.ward_name}
+                          {voter.ward_name}
                         </p>
                       </div>
                     </div>

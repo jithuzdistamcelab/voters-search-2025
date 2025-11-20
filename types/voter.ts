@@ -24,3 +24,9 @@ export interface Voter {
   district: string;
   local_body: string;
 }
+
+export const WARDS = [
+  { code: "049", name: "KAIKULANGARA" },
+  { code: "048", name: "PORT" },
+  // add more...
+];
